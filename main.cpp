@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include "stm32f10x.h"
 #include "usart_interface.h"
-#include "Libraries/ReallyARM/homer_servo_controller.h"
+#include "homer_servo_controller.h"
 
 /* Private typedef -----------------------------------------------------------*/
 
@@ -22,7 +22,7 @@
 
 /* Private define ------------------------------------------------------------*/
 
-/* Private variables ---------------------------------------------------------*/
+/* Global variables ----------------------------------------------------------*/
 
 /* External function prototypes ----------------------------------------------*/
 extern "C" char* get_heap_end( void );
@@ -57,38 +57,63 @@ int main( void )
   /* Enable Green LED */
   GPIO_SetBits( GPIOC, GPIO_Pin_9 );
 
+  const uint8_t pos1[] =
+  {
+    140,  70,  60,  50, 150, // Left  hand (arm to claws)
+     60, 250, 150, 240, 200, // Right hand (arm to claws)
+    150, 140, 170, 230        // Body (Up to down)
+  };
+  const uint8_t pos2[] =
+  {
+    140,  70,  60,  50, 100, // Left  hand (arm to claws)
+     60, 250, 150, 240, 200, // Right hand (arm to claws)
+    150, 140, 170, 230        // Body (Up to down)
+  };
+
   USARTInterface dbg(USART3);
-  dbg.putString("Hello!!!", '\n');
-
-  const uint16_t pos1[] =
-  {
-    1400,  700,  600,  500, 1500, // Left  hand (arm to claws)
-     600, 2500, 1500, 2400, 2000, // Right hand (arm to claws)
-    1500, 1500,                   // Track drive
-    1500, 1400, 1700, 2300        // Body (Up to down)
-  };
-  const uint16_t pos2[] =
-  {
-    1400,  700,  600,  500, 1000, // Left  hand (arm to claws)
-     600, 2500, 1500, 2400, 2000, // Right hand (arm to claws)
-    1500, 1500,                   // Track drive
-    1500, 1400, 1700, 2300        // Body (Up to down)
-  };
-
+  dbg.putString("READY", '\n');
   HOMERServoController homer(USART1);
-  while (dbg.getCh() != 'c');
-  homer.setPositionVector(pos1);
-  homer.flush();
-  while (dbg.getCh() != 'c');
-  homer.setPositionVector(pos2);
-  homer.flush();
-  while (dbg.getCh() != 'c');
-
-  homer.setDefaultState();
+  char *status = "HOMER: ready, initialisation complete.";
   while ( 1 )
   {
+    while (dbg.getCh() != 'h');
+    uint8_t cmd = dbg.getCh();
+    uint8_t subcmd = dbg.getCh();
+    if (cmd == 's')
+    {
+      if (subcmd == 'g')
+      {
+        dbg.putString(status, '\n');
+      }
+    }
+    if (cmd == 'c')
+    {
+      if (subcmd == 's')
+      {
+        status = "HOMER: main program in process.";
+        dbg.putString(status, '\n');
+        homer.setPositionVector(pos1);
+        homer.flush();
+        bool set = homer.positionIsSet();
+        while (!set)
+        {
+          for (uint32_t i = 0; i < 4000000; ++i)
+            asm("nop");
+          set = homer.positionIsSet();
+        }
+        homer.setPositionVector(pos2);
+        homer.flush();
+        set = homer.positionIsSet();
+        while (!set)
+        {
+          for (uint32_t i = 0; i < 4000000; ++i)
+            asm("nop");
+          set = homer.positionIsSet();
+        }
+        status = "HOMER: main program is complete.";
+      }
+    }
   }
-
   return 0;
 }
 

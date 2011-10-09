@@ -355,8 +355,8 @@ CPLUSPLUS_LIB = -lstdc++
 LDFLAGS = -Wl,-Map=$(OUTDIR)/$(TARGET).map,--cref,--gc-sections
 #not in CPP
 #LDFLAGS += -nostartfiles
-LDFLAGS += -lc
-LDFLAGS += $(MATH_LIB)
+#LDFLAGS += -lc
+#LDFLAGS += $(MATH_LIB)
 LDFLAGS += -lc -lgcc
 LDFLAGS += $(CPLUSPLUS_LIB)
 LDFLAGS += $(patsubst %,-L%,$(EXTRA_LIBDIRS))

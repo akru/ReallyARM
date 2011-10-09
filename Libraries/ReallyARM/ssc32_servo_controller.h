@@ -10,13 +10,15 @@ class SSC32ServoController
 public:
   SSC32ServoController(USART_TypeDef *USARTx, uint8_t numServo);
   ~SSC32ServoController();
-  void setPositionVector(const uint16_t *vect);
+  void setPositionVector(const uint8_t *vect);
   void setTimeVector(const uint16_t *vect);
+  uint8_t * getRealState() const;
   void flush() const;
+  bool positionIsSet() const;
 
 private:
   const uint8_t _numServo;
-  uint16_t *_posVect;
+  uint8_t *_posVect;
   uint16_t *_timeVect;
 };
 

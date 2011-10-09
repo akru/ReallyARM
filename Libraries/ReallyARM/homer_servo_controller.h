@@ -12,8 +12,8 @@ public:
   void setDefaultState();
 
 private:
-  static const uint8_t numServo = 16;
-  static const uint16_t defaultPosition[];
+  static const uint8_t numServo = 14;
+  static const uint8_t defaultPosition[];
   static const uint16_t defaultTime[];
 };
 

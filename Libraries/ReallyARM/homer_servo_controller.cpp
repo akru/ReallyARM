@@ -1,25 +1,31 @@
 #include "homer_servo_controller.h"
+#include "utils.h"
 
-const uint16_t HOMERServoController::defaultPosition[] =
+const uint8_t HOMERServoController::defaultPosition[] =
 {
-  2400,  700, 1500,  500, 1000, // Left  hand (arm to claws)
-   600, 2500, 1500, 2400, 2000, // Right hand (arm to claws)
-  1500, 1500,                   // Track drive
-  1500, 1400, 1700, 2300        // Body (Up to down)
+  240,  70, 150,  50, 100, // Left  hand (arm to claws)
+   60, 250, 150, 240, 200, // Right hand (arm to claws)
+  150, 140, 170, 230        // Body (Up to down)
 };
 
 const uint16_t HOMERServoController::defaultTime[] =
 {
   2000, 2000, 2000, 2000, 2000,
   2000, 2000, 2000, 2000, 2000,
-  2000, 2000,
-  2000, 2000, 2000, 2000
+  2000, 2000, 2000, 2000,
 };
 
 HOMERServoController::HOMERServoController(USART_TypeDef *USARTx)
   : SSC32ServoController(USARTx, numServo)
 {
   setDefaultState();
+  bool set = positionIsSet();
+  while (!set)
+  {
+    for (uint32_t i = 0; i < 4000000; ++i)
+      asm("nop");
+    set = positionIsSet();
+  }
 }
 
 void HOMERServoController::setDefaultState()

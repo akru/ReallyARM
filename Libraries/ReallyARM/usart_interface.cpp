@@ -1,7 +1,8 @@
 #include "usart_interface.h"
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_gpio.h"
-#include <string.h>
+#include "utils.h"
+#include <stdint.h>
 
 USARTInterface::USARTInterface(USART_TypeDef *USARTx)
   : _USART(USARTx)
@@ -80,16 +81,36 @@ USARTInterface::USARTInterface(USART_TypeDef *USARTx)
   USART_Cmd(USARTx, ENABLE);
 }
 
-void USARTInterface::putCh(char ch) const
+void USARTInterface::putCh(uint8_t ch) const
 {
-  while (USART_GetFlagStatus(_USART, USART_FLAG_TXE) == RESET);
+  while (!readyPut());
   USART_SendData(_USART, ch);
 }
 
-char USARTInterface::getCh() const
+uint8_t USARTInterface::getCh() const
 {
-  while (USART_GetFlagStatus(_USART, USART_FLAG_RXNE) == RESET);
+  while (!readyGet());
   return USART_ReceiveData(_USART);
+}
+
+bool USARTInterface::readyPut() const
+{
+  if (USART_GetFlagStatus(_USART, USART_FLAG_TXE) == RESET)
+    return false;
+  return true;
+}
+
+bool USARTInterface::readyGet() const
+{
+  if (USART_GetFlagStatus(_USART, USART_FLAG_RXNE) == RESET)
+    return false;
+  return true;
+}
+
+void USARTInterface::eraseReadBuffer() const
+{
+  while (readyGet())
+    getCh();
 }
 
 void USARTInterface::putString(const char *str, char separator) const
@@ -101,15 +122,15 @@ void USARTInterface::putString(const char *str, char separator) const
 
 char * USARTInterface::getString(char separator) const
 {
-  const size_t bufSize = 500;
+  const uint8_t bufSize = 255;
   char buf[bufSize];
-  size_t i = 0;
+  uint8_t i = 0;
   while (char ch = getCh() != separator && i < bufSize)
     buf[i++] = ch;
   if (i == bufSize)
     return 0;
   buf[i] = 0;
   char *out = new char[++i];
-  memcpy(out, buf, i);
+  String::strcpy(buf, out);
   return out;
 }
